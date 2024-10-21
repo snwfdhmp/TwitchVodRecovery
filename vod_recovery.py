@@ -2224,7 +2224,12 @@ def handle_download_menu(link, title=None, stream_datetime=None):
             return run_vod_recover()
         elif start_download == 3 and vlc_location:
             if os.path.isfile(link):
-                subprocess.Popen([vlc_location, link.replace("/", "\\")])
+                link = link.replace("/", "\\") if os.name == "nt" else link
+
+            if sys.platform.startswith("darwin"):
+                subprocess.Popen(["open", "-a", vlc_location, link])
+            elif os.name == "posix":
+                subprocess.Popen([vlc_location, link])
             else:
                 subprocess.Popen([vlc_location, link])
         elif start_download == exit_option:
@@ -2300,7 +2305,15 @@ def handle_file_download_menu(m3u8_file_path):
             break
 
         elif start_download == 3 and vlc_location:
-            subprocess.Popen([vlc_location, m3u8_file_path.replace("/", "\\")])
+            if os.path.isfile(m3u8_file_path):
+                m3u8_file_path = m3u8_file_path.replace("/", "\\") if os.name == "nt" else m3u8_file_path
+
+            if sys.platform.startswith("darwin"):
+                subprocess.Popen(["open", "-a", vlc_location, m3u8_file_path])
+            elif os.name == "posix":
+                subprocess.Popen([vlc_location, m3u8_file_path])
+            else:
+                subprocess.Popen([vlc_location, m3u8_file_path])
         elif start_download == exit_option:
             return run_vod_recover()
         else:
