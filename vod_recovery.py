@@ -31,6 +31,7 @@ SUPPORTED_FORMATS = [".mp4", ".mkv", ".mov", ".avi", ".ts"]
 if sys.platform == 'win32':
 	asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
+
 def read_config_by_key(config_file, key):
     script_dir = os.path.dirname(os.path.realpath(__file__))
     config_path = os.path.join(script_dir, "config", f"{config_file}.json")
@@ -52,13 +53,23 @@ def get_default_video_format():
 def get_default_directory():
     default_directory = read_config_by_key("settings", "DEFAULT_DIRECTORY")
 
-    if not os.path.exists(default_directory):
+    if not default_directory:
         default_directory = "~/Downloads/"
-        os.makedirs(default_directory)
 
-    if os.name == "nt" and default_directory:
+    default_directory = os.path.expanduser(default_directory)
+
+    if not os.path.exists(default_directory):
+        try:
+            os.makedirs(default_directory)
+        except Exception:
+            default_directory = os.path.expanduser("~/Downloads/")
+            if not os.path.exists(default_directory):
+                os.makedirs(default_directory)
+
+    if os.name == "nt":
         default_directory = default_directory.replace("/", "\\")
-    return os.path.expanduser(default_directory)
+
+    return default_directory
 
 
 def get_default_downloader():
@@ -617,36 +628,72 @@ def set_default_video_format():
 
 
 def set_default_directory():
-    print("\nSelect the default directory")
-    window = tk.Tk()
-    window.wm_attributes("-topmost", 1)
-    window.withdraw()
-    file_path = filedialog.askdirectory(
-        parent=window, initialdir=dir, title="Select A Default Directory"
-    )
+    try:
+        print("\nSelect the default directory")
+        window = tk.Tk()
+        window.wm_attributes("-topmost", 1)
+        window.withdraw()
+        file_path = filedialog.askdirectory(
+            parent=window, initialdir=dir, title="Select A Default Directory"
+        )
 
-    if file_path:
-        if not file_path.endswith("/"):
-            file_path += "/"
-        script_dir = get_script_directory()
-        config_file_path = os.path.join(script_dir, "config", "settings.json")
+        if file_path:
+            if not file_path.endswith("/"):
+                file_path += "/"
+            script_dir = get_script_directory()
+            config_file_path = os.path.join(script_dir, "config", "settings.json")
 
-        try:
-            with open(config_file_path, "r", encoding="utf-8") as config_file:
-                config_data = json.load(config_file)
+            try:
+                with open(config_file_path, "r", encoding="utf-8") as config_file:
+                    config_data = json.load(config_file)
 
-            config_data["DEFAULT_DIRECTORY"] = file_path
-            with open(config_file_path, "w", encoding="utf-8") as config_file:
-                json.dump(config_data, config_file, indent=4)
+                config_data["DEFAULT_DIRECTORY"] = file_path
+                with open(config_file_path, "w", encoding="utf-8") as config_file:
+                    json.dump(config_data, config_file, indent=4)
 
-            print(f"\n\033[92m\u2713  Default directory set to: {file_path}\033[0m")
+                print(f"\n\033[92m\u2713  Default directory set to: {file_path}\033[0m")
 
-        except (FileNotFoundError, json.JSONDecodeError) as error:
-            print(f"Error: {error}")
-    else:
-        print("\nNo folder selected! Returning to main menu...")
+            except (FileNotFoundError, json.JSONDecodeError) as error:
+                print(f"Error: {error}")
+        else:
+            print("\nNo folder selected! Returning to main menu...")
 
-    window.destroy()
+        window.destroy()
+    except tk.TclError:
+        file_path = input("Enter the full path to the default directory: ").strip(' "\'')
+        while True:
+            if not file_path:
+                print("\nNo directory entered! Returning to main menu...")
+                return
+            
+            file_path = os.path.expanduser(file_path)
+            
+            try:
+                os.makedirs(file_path, exist_ok=True)
+            except Exception as e:
+                file_path = input(f"Error creating directory: {e}\nEnter a valid path: ").strip(' "\'')
+                continue
+
+            if not file_path.endswith("/"):
+                file_path += "/"
+
+            script_dir = get_script_directory()
+            config_file_path = os.path.join(script_dir, "config", "settings.json")
+
+            try:
+                with open(config_file_path, "r", encoding="utf-8") as config_file:
+                    config_data = json.load(config_file)
+
+                config_data["DEFAULT_DIRECTORY"] = file_path
+                with open(config_file_path, "w", encoding="utf-8") as config_file:
+                    json.dump(config_data, config_file, indent=4)
+
+                print(f"\n\033[92m\u2713  Default directory set to: {file_path}\033[0m")
+                break
+
+            except (FileNotFoundError, json.JSONDecodeError) as error:
+                print(f"Error: {error}")
+                return
 
 
 def set_default_downloader():
@@ -682,18 +729,26 @@ def set_default_downloader():
 
 
 def get_m3u8_file_dialog():
-    window = tk.Tk()
-    window.wm_attributes("-topmost", 1)
-    window.withdraw()
-    directory = get_default_directory()
-    file_path = filedialog.askopenfilename(
-        parent=window,
-        initialdir=directory,
-        title="Select A File",
-        filetypes=(("M3U8 files", "*.m3u8"), ("All files", "*")),
-    )
-    window.destroy()
-    return file_path
+    try:
+        window = tk.Tk()
+        window.wm_attributes("-topmost", 1)
+        window.withdraw()
+        directory = get_default_directory()
+        file_path = filedialog.askopenfilename(
+            parent=window,
+            initialdir=directory,
+            title="Select A File",
+            filetypes=(("M3U8 files", "*.m3u8"), ("All files", "*")),
+        )
+        window.destroy()
+        return file_path
+    except tk.TclError:
+        file_path = input("Enter the full path to the M3U8 file: ").strip(' "\'')
+        while not file_path:
+            return None
+        while not os.path.exists(file_path):
+            file_path = input("File does not exist! Enter a valid path: ").strip(' "\'')
+        return file_path
 
 
 def parse_vod_filename(m3u8_video_filename):
@@ -1550,21 +1605,37 @@ def clip_recover(streamer, video_id, duration):
 
 
 def get_and_validate_csv_filename():
-    window = tk.Tk()
-    window.wm_attributes("-topmost", 1)
-    window.withdraw()
+    try:
+        window = tk.Tk()
+        window.wm_attributes("-topmost", 1)
+        window.withdraw()
 
-    file_path = filedialog.askopenfilename(parent=window, title="Select The CSV File", filetypes=(("CSV files", "*.csv"), ("all files", "*.*")))
+        file_path = filedialog.askopenfilename(parent=window, title="Select The CSV File", filetypes=(("CSV files", "*.csv"), ("all files", "*.*")))
 
-    if not file_path:
-        print("\nNo file selected! Returning to main menu.")
-        return run_vod_recover()
-    window.destroy()
-    csv_filename = os.path.basename(file_path)
-    pattern = r"^[a-zA-Z0-9_]{4,25} - Twitch stream stats"
-    if bool(re.match(pattern, csv_filename)):
-        return file_path
-    print("The CSV filename MUST be the original filename that was downloaded from sullygnome!")
+        if not file_path:
+            print("\nNo file selected! Returning to main menu.")
+            return run_vod_recover()
+        window.destroy()
+        csv_filename = os.path.basename(file_path)
+        pattern = r"^[a-zA-Z0-9_]{4,25} - Twitch stream stats"
+        if bool(re.match(pattern, csv_filename)):
+            return file_path
+        print("The CSV filename MUST be the original filename that was downloaded from sullygnome!")
+    except tk.TclError:
+        file_path = input("Enter the full path to the CSV file: ").strip(' "\'')
+        while True:
+            if not file_path:
+                print("\nNo file entered! Returning to main menu.")
+                return run_vod_recover()
+            if not os.path.exists(file_path):
+                file_path = input("File does not exist! Enter a valid path: ").strip(' "\'')
+                continue
+            csv_filename = os.path.basename(file_path)
+            pattern = r"^[a-zA-Z0-9_]{4,25} - Twitch stream stats"
+            if bool(re.match(pattern, csv_filename)):
+                return file_path
+            print("The CSV filename MUST be the original filename that was downloaded from sullygnome!")
+            file_path = input("Enter a valid path: ").strip(' "\'')
 
 
 def parse_clip_csv_file(file_path):
@@ -1797,7 +1868,7 @@ def use_progress_bar(command, output_filename, total_duration):
         ff = FfmpegProgress(command)
         with tqdm(total=100, position=0, desc=output_filename, leave=None, colour="green", unit="%", bar_format="{l_bar}{bar}| {percentage:.1f}/100% [{elapsed}]{postfix}") as pbar:
             for progress in ff.run_command_with_progress():
-                pbar.update(progress - pbar.n)  # Update with the exact progress value
+                pbar.update(progress - pbar.n)
                 
                 if total_duration is not None:
                     total_duration_seconds = total_duration
