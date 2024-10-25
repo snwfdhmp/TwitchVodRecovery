@@ -25,7 +25,7 @@ from tqdm import tqdm
 from ffmpeg_progress_yield import FfmpegProgress
 
 
-CURRENT_VERSION = "1.3.3"
+CURRENT_VERSION = "1.3.4"
 SUPPORTED_FORMATS = [".mp4", ".mkv", ".mov", ".avi", ".ts"]
 
 if sys.platform == 'win32':
@@ -1171,8 +1171,12 @@ def parse_streamscharts_datetime_data(bs):
     )
     stream_datetime = datetime.strptime(stream_date, "%d %b %Y %H:%M:%S").strftime("%Y-%m-%d %H:%M:%S")
 
-    streamcharts_duration = bs.find_all("div", {"class": "text-xs font-bold"})[3].text
-    streamcharts_duration_in_minutes = parse_website_duration(streamcharts_duration)
+
+    try:
+        streamcharts_duration = bs.find_all("span", {"class": "mx-2 font-bold"})[0].text
+        streamcharts_duration_in_minutes = parse_website_duration(streamcharts_duration)
+    except Exception:
+        streamcharts_duration_in_minutes = None
 
     print(f"Datetime: {stream_datetime}")
     return stream_datetime, streamcharts_duration_in_minutes
@@ -1207,8 +1211,11 @@ def parse_datetime_streamscharts(streamscharts_url):
 
 def parse_twitchtracker_datetime_data(bs):
     twitchtracker_datetime = bs.find_all("div", {"class": "stream-timestamp-dt"})[0].text
-    twitchtracker_duration = bs.find_all("div", {"class": "g-x-s-value"})[0].text
-    twitchtracker_duration_in_minutes = parse_website_duration(twitchtracker_duration)
+    try:
+        twitchtracker_duration = bs.find_all("div", {"class": "g-x-s-value"})[0].text
+        twitchtracker_duration_in_minutes = parse_website_duration(twitchtracker_duration)
+    except Exception:
+        twitchtracker_duration_in_minutes = None
 
     print(f"Datetime: {twitchtracker_datetime}")
     return twitchtracker_datetime, twitchtracker_duration_in_minutes
@@ -1241,8 +1248,11 @@ def parse_datetime_twitchtracker(twitchtracker_url):
                     twitchtracker_datetime = match.group(0)
                     print(f"Datetime: {twitchtracker_datetime}")
 
-                    twitchtracker_duration = bs.find_all("div", {"class": "g-x-s-value"})[0].text
-                    twitchtracker_duration_in_minutes = parse_website_duration(twitchtracker_duration)
+                    try:
+                        twitchtracker_duration = bs.find_all("div", {"class": "g-x-s-value"})[0].text
+                        twitchtracker_duration_in_minutes = parse_website_duration(twitchtracker_duration)
+                    except Exception:
+                        twitchtracker_duration_in_minutes = None
 
                     return twitchtracker_datetime, twitchtracker_duration_in_minutes
     except Exception:
@@ -1289,8 +1299,7 @@ def parse_datetime_sullygnome(sullygnome_url):
 def unmute_vod(m3u8_link):
     video_filepath = get_vod_filepath(parse_streamer_from_m3u8_link(m3u8_link), parse_video_id_from_m3u8_link(m3u8_link))
     
-    if not os.path.exists(video_filepath):
-        write_m3u8_to_file(m3u8_link, video_filepath)
+    write_m3u8_to_file(m3u8_link, video_filepath)
     
     with open(video_filepath, "r+", encoding="utf-8") as video_file:
         file_contents = video_file.readlines()
