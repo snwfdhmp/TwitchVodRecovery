@@ -1994,9 +1994,6 @@ def download_m3u8_video_url_slice(m3u8_link, output_filename, video_start_time, 
 
 
 def download_m3u8_video_file(m3u8_file_path, output_filename):    
-    if os.name != 'nt':
-        output_filename = quote_filename(output_filename)
-
     output_path = os.path.normpath(os.path.join(get_default_directory(), output_filename))
     handle_file_already_exists(output_path)
 
@@ -2010,7 +2007,6 @@ def download_m3u8_video_file(m3u8_file_path, output_filename):
             "-ignore_unknown",
             "-i", m3u8_file_path,
             "-c", "copy",
-            "-f", get_default_video_format().lstrip("."),
             "-y", output_path,
         ]
 
@@ -2043,10 +2039,7 @@ def download_m3u8_video_file(m3u8_file_path, output_filename):
         handle_retry_command(command)
 
 
-def download_m3u8_video_file_slice(m3u8_file_path, output_filename, video_start_time, video_end_time):    
-    if os.name != 'nt':
-        output_filename = quote_filename(output_filename)
-
+def download_m3u8_video_file_slice(m3u8_file_path, output_filename, video_start_time, video_end_time):
     output_path = os.path.normpath(os.path.join(get_default_directory(), output_filename))
     handle_file_already_exists(output_path)
 
@@ -2068,7 +2061,6 @@ def download_m3u8_video_file_slice(m3u8_file_path, output_filename, video_start_
         "-to", video_end_time, 
         "-i", m3u8_file_path,
         "-c", "copy",
-        "-f", get_default_video_format().lstrip("."),
         "-y", output_path,
     ]
 
