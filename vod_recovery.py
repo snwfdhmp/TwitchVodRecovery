@@ -25,7 +25,7 @@ from tqdm import tqdm
 from ffmpeg_progress_yield import FfmpegProgress
 
 
-CURRENT_VERSION = "1.3.4"
+CURRENT_VERSION = "1.3.5"
 SUPPORTED_FORMATS = [".mp4", ".mkv", ".mov", ".avi", ".ts"]
 
 if sys.platform == 'win32':
@@ -48,6 +48,17 @@ def get_default_video_format():
     if default_video_format in SUPPORTED_FORMATS:
         return default_video_format
     return ".mp4"
+
+
+def get_ffmpeg_format(file_extension):
+    format_map = {
+        '.mp4': 'mp4',
+        '.mkv': 'matroska',
+        '.ts': 'mpegts',
+        '.mov': 'mov',
+        '.avi': 'avi'
+    }
+    return format_map.get(file_extension, 'mp4')
 
 
 def get_default_directory():
@@ -1921,7 +1932,7 @@ def download_m3u8_video_url(m3u8_link, output_filename):
             "-i", m3u8_link, 
             "-hide_banner",
             "-c", "copy", 
-            "-f", get_default_video_format().lstrip("."),
+            "-f", get_ffmpeg_format(get_default_video_format()),
             "-y", output_path
         ]
     else:
@@ -1957,6 +1968,7 @@ def download_m3u8_video_url_slice(m3u8_link, output_filename, video_start_time, 
     downloader = get_default_downloader()
 
     if downloader == "ffmpeg":
+        
         command = [
             get_ffmpeg_path(),
             "-protocol_whitelist", "file,http,https,tcp,tls",
@@ -1965,7 +1977,7 @@ def download_m3u8_video_url_slice(m3u8_link, output_filename, video_start_time, 
             "-to", video_end_time, 
             "-i", m3u8_link,
             "-c", "copy",
-            "-f", get_default_video_format().lstrip("."),
+            "-f", get_ffmpeg_format(get_default_video_format()),
             "-y", output_path,
         ]
     elif downloader == "yt-dlp":
@@ -2007,6 +2019,7 @@ def download_m3u8_video_file(m3u8_file_path, output_filename):
             "-ignore_unknown",
             "-i", m3u8_file_path,
             "-c", "copy",
+            "-f", get_ffmpeg_format(get_default_video_format()),
             "-y", output_path,
         ]
 
@@ -2061,6 +2074,7 @@ def download_m3u8_video_file_slice(m3u8_file_path, output_filename, video_start_
         "-to", video_end_time, 
         "-i", m3u8_file_path,
         "-c", "copy",
+        "-f", get_ffmpeg_format(get_default_video_format()),
         "-y", output_path,
     ]
 
