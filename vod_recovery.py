@@ -487,6 +487,12 @@ def read_csv_file(csv_file_path):
     with open(csv_file_path, "r", encoding="utf-8") as csv_file:
         return list(csv.reader(csv_file))
 
+def get_use_progress_bar():
+    try:
+        use_progress_bar = read_config_by_key("settings", "USE_PROGRESS_BAR")
+        return use_progress_bar if use_progress_bar is not None else True
+    except Exception:
+        return True
 
 def get_current_version():
     current_version = read_config_by_key("settings", "CURRENT_VERSION")
@@ -1874,7 +1880,7 @@ def get_m3u8_duration(m3u8_link):
         return None
 
 
-def use_progress_bar(command, output_filename, total_duration):
+def handle_progress_bar(command, output_filename, total_duration):
     try:
         ff = FfmpegProgress(command)
         with tqdm(total=100, position=0, desc=output_filename, leave=None, colour="green", unit="%", bar_format="{l_bar}{bar}| {percentage:.1f}/100% [{elapsed}]{postfix}") as pbar:
@@ -1888,10 +1894,6 @@ def use_progress_bar(command, output_filename, total_duration):
                     total_duration_str = str(timedelta(seconds=int(total_duration_seconds)))
                     pbar.set_postfix_str(f"{current_duration_str}/{total_duration_str}")
 
-                # if ff.stderr:
-                #     for line in ff.stderr.splitlines():
-                #         if "error" in line.lower():
-                #             print(line)
             pbar.close()
         return True
     except Exception as e:
@@ -1948,9 +1950,9 @@ def download_m3u8_video_url(m3u8_link, output_filename):
     print("\nCommand: " + " ".join(command) + "\n")
 
     try:
-        if downloader == "ffmpeg":
+        if downloader == "ffmpeg" and get_use_progress_bar():
             total_duration = get_m3u8_duration(m3u8_link)
-            use_progress_bar(command, output_filename, total_duration)
+            handle_progress_bar(command, output_filename, total_duration)
         else:
             subprocess.run(command, shell=True, check=True)
         return True
@@ -1994,9 +1996,9 @@ def download_m3u8_video_url_slice(m3u8_link, output_filename, video_start_time, 
     print("\nCommand: " + " ".join(command) + "\n")
 
     try:
-        if downloader == "ffmpeg":
+        if downloader == "ffmpeg" and get_use_progress_bar():
             total_duration = get_m3u8_duration(m3u8_link)
-            use_progress_bar(command, output_filename, total_duration)
+            handle_progress_bar(command, output_filename, total_duration)
 
         else:
             subprocess.run(command, shell=True, check=True)
@@ -2041,9 +2043,9 @@ def download_m3u8_video_file(m3u8_file_path, output_filename):
     print("\nCommand: " + " ".join(command) + "\n")
 
     try:
-        if downloader == "ffmpeg":
+        if downloader == "ffmpeg" and get_use_progress_bar():
             total_duration = get_m3u8_duration(m3u8_file_path)
-            use_progress_bar(command, output_filename, total_duration)
+            handle_progress_bar(command, output_filename, total_duration)
 
         else:
             subprocess.run(command, shell=True, check=True)
@@ -2081,9 +2083,9 @@ def download_m3u8_video_file_slice(m3u8_file_path, output_filename, video_start_
     print("\nCommand: " + " ".join(command) + "\n")
 
     try:
-        if downloader == "ffmpeg":
+        if downloader == "ffmpeg" and get_use_progress_bar():
             total_duration = get_m3u8_duration(m3u8_file_path)
-            use_progress_bar(command, output_filename, total_duration)
+            handle_progress_bar(command, output_filename, total_duration)
         else:
             subprocess.run(command, shell=True, check=True)
         return True

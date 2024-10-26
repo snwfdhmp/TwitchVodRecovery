@@ -4,6 +4,7 @@
     "AUTO_DOWNLOAD_CLIPS": false,
     "REMOVE_LOG_FILE": true,
     "ALWAYS_BEST_QUALITY": true,
+    "USE_PROGRESS_BAR": true,
     "DEFAULT_DIRECTORY": "~/Downloads/",
     "DEFAULT_VIDEO_FORMAT": ".mp4",
     "VLC_LOCATION": "",
