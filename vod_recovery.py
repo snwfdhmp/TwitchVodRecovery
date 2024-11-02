@@ -25,7 +25,7 @@ from tqdm import tqdm
 from ffmpeg_progress_yield import FfmpegProgress
 
 
-CURRENT_VERSION = "1.3.5"
+CURRENT_VERSION = "1.3.6"
 SUPPORTED_FORMATS = [".mp4", ".mkv", ".mov", ".avi", ".ts"]
 
 if sys.platform == 'win32':
@@ -1528,7 +1528,7 @@ def vod_recover(streamer_name, video_id, timestamp, tracker_url=None):
     if vod_url is None:
         alternate_websites = generate_website_links(streamer_name, video_id, tracker_url)
 
-        print("\nUnable to recover! Trying alternate sources...")
+        print("\nUnable to recover with provided url! Trying alternate sources...")
         all_timestamps = [timestamp]
 
         # Check if any alternate websites have a different timestamp
