@@ -1025,25 +1025,10 @@ async def get_vod_urls(streamer_name, video_id, start_timestamp):
         for domain in domains if domain.strip()
     ]
 
-    successful_url = None
-    progress_printed = False
+    print("\n".join(m3u8_link_list))
+    print("\nExiting process...")
 
-    async with aiohttp.ClientSession() as session:
-        tasks = [fetch_status(session, url) for url in m3u8_link_list]
-        task_objects = [asyncio.create_task(task) for task in tasks]
-
-        for index, task in enumerate(asyncio.as_completed(task_objects), 1):
-            url = await task
-            
-            print(f"\rSearching {index}/{len(m3u8_link_list)} URLs", end="", flush=True)
-            progress_printed = True
-            if url:
-                successful_url = url
-                print("\n" if progress_printed else "\n\n")
-                print(f"\033[92m\u2713 Found URL: {successful_url}\033[0m\n")
-                for task_obj in task_objects:
-                    task_obj.cancel()
-                break
+    sys.exit(0) # early exit because that's all we need
 
     return successful_url
 
