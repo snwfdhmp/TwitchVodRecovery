@@ -2494,7 +2494,9 @@ def get_vod_or_highlight_url(vod_id):
 
 
 def twitch_recover(link=None):
-    url = link if link else print_get_twitch_url_menu()
+    print("entering twitch_recover")
+    # get it from python vod.py <url> argv
+    url = sys.argv[1]
     vod_id = extract_id_from_url(url)
     url, title, stream_datetime = get_vod_or_highlight_url(vod_id)
 
@@ -2512,7 +2514,8 @@ def twitch_recover(link=None):
     print(f"\n\033[92m\u2713 Found URL: {m3u8_url}\033[0m")
 
     m3u8_source = process_m3u8_configuration(m3u8_url, skip_check=True)
-    return handle_download_menu(m3u8_source, title=title, stream_datetime=format_datetime)
+    # run_vod_recover
+    handle_vod_url_normal(m3u8_source, title=title, stream_datetime=format_datetime)
 
 
 def get_twitch_clip(clip_slug, retries=3):
@@ -2587,119 +2590,7 @@ def handle_twitch_clip(clip_url):
 
 def run_vod_recover():
     print("\nWELCOME TO VOD RECOVERY!")
-    
-    menu = 0
-    while menu < 50:
-        print()
-        menu = print_main_menu()
-        if menu == 1:
-            vod_mode = print_video_mode_menu()
-            if vod_mode == 1:
-                link, stream_datetime = website_vod_recover()
-                handle_download_menu(link, stream_datetime=stream_datetime)
-            elif vod_mode == 2:
-                manual_vod_recover()
-            elif vod_mode == 3:
-                bulk_vod_recovery()
-            elif vod_mode == 4:
-                continue
-        elif menu == 2:
-            clip_type = print_clip_type_menu()
-            if clip_type == 1:
-                clip_recovery_method = print_clip_recovery_menu()
-                if clip_recovery_method == 1:
-                    website_clip_recover()
-                elif clip_recovery_method == 2:
-                    manual_clip_recover()
-                elif clip_recovery_method == 3:
-                    continue
-            elif clip_type == 2:
-                video_id, hour, minute = get_random_clip_information()
-                random_clip_recovery(video_id, hour, minute)
-            elif clip_type == 3:
-                clip_url = print_get_twitch_url_menu()
-                handle_twitch_clip(clip_url)
-            elif clip_type == 4:
-                asyncio.run(bulk_clip_recovery())
-            elif clip_type == 5:
-                continue
-        elif menu == 3:
-            download_type = print_download_type_menu()
-            if download_type == 1:
-                vod_url = print_get_m3u8_link_menu()
-                print()
-                m3u8_source = process_m3u8_configuration(vod_url)
-                handle_download_menu(m3u8_source)
-            elif download_type == 2:
-                file_path = get_m3u8_file_dialog()
-                if not file_path:
-                    print("\nNo file selected! Returning to main menu.")
-                    continue
-                print(f"\n{file_path}\n")
-                m3u8_file_path = file_path.strip()
-
-                handle_file_download_menu(m3u8_file_path)
-                input("Press Enter to continue...")
-
-            elif download_type == 3:
-                twitch_recover()
-
-            elif download_type == 4:
-                continue
-        elif menu == 4:
-            mode = print_handle_m3u8_availability_menu()
-            if mode == 1:
-                url = print_get_m3u8_link_menu()
-                is_muted = is_video_muted(url)
-                if is_muted:
-                    print("\nVideo contains muted segments")
-                    choice = input("Do you want to unmute the video? (Y/N): ")
-                    if choice.upper() == "Y":
-                        print()
-                        unmute_vod(url)
-                        input("Press Enter to continue...")
-                    else:
-                        print("\nReturning to main menu...")
-                        continue
-                else:
-                    print("\n\033[92mVideo is not muted! \033[0m")
-            elif mode == 2:
-                url = print_get_m3u8_link_menu()
-                mark_invalid_segments_in_playlist(url)
-
-            elif menu == 3:
-                continue
-        elif menu == 5:
-            while True:
-                print()
-                options_choice = print_options_menu()
-                if options_choice == 1:
-                    set_default_video_format()
-                elif options_choice == 2:
-                    set_default_directory()
-                elif options_choice == 3:
-                    set_default_downloader()
-                elif options_choice == 4:
-                    check_for_updates()
-                elif options_choice == 5:
-                    script_dir = get_script_directory()
-                    config_file_path = os.path.join(script_dir, "config", "settings.json")
-                    if os.path.exists(config_file_path):
-                        print(f"Opening {config_file_path}...")
-                        open_file(config_file_path)
-                        input("\nPress Enter to continue...")
-                    else:
-                        print("File not found!")
-                elif options_choice == 6:
-                    print_help()
-                    input("Press Enter to continue...")
-                elif options_choice == 7:
-                    break
-        elif menu == 6:
-            print("\nExiting...\n")
-            sys.exit()
-        else:
-            run_vod_recover()
+    twitch_recover()
 
 
 if __name__ == "__main__":
